@@ -2,11 +2,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
-from .serializers import UserSignupSerializer, UserLoginSerializer, UserProfileSerializer, PasswordResetRequestSerializer, PasswordResetSerializer
+from .serializers import UserSignupSerializer, UserLoginSerializer, UserProfileSerializer, PasswordResetRequestSerializer, PasswordResetSerializer, PasswordChangeSerializer
 from .token_auth import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics
-from .models import UserProfile
+from .models import UserProfile, CustomUser
 from django.shortcuts import get_object_or_404
 
 class UserSignupView(APIView):
@@ -121,3 +121,28 @@ class PasswordResetView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Your password has been reset successfully."}, status=status.HTTP_200_OK)
+
+
+class PasswordChangeView(generics.UpdateAPIView):
+    """
+    An endpoint for the user to change their password.
+    """
+    serializer_class = PasswordChangeSerializer
+    model = CustomUser
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, queryset=None):
+        """
+        Retrieve and return the authenticated user.
+        """
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        """
+        Handle the PUT request to change the user's password.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
